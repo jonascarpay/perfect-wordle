@@ -33,6 +33,6 @@
         };
         flake = pkgs.hsPkgs.flake { };
       in
-      flake // { defaultPackage = flake.packages."perfect-wordle:exe:perfect-wordle-exe"; }
+      flake // { defaultPackage = flake.packages."perfect-wordle:exe:perfect-wordle"; }
     );
 }
