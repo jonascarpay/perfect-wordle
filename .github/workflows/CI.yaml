@@ -18,9 +18,6 @@ jobs:
         run: nix build -L --impure --expr '(import ./pkgs.nix).hsPkgs.shellFor {}'
       - name: Build perfect-wordle
         run: nix build -L
-      # TODO `nix flake check` is currently system-dependent but should be used here
-      - name: Build perfect-wordle checks
-        run: nix build -L '.#checks.x86_64-linux."perfect-wordle:test:perfect-wordle-test"'
       - name: Build perfect-wordle shell
         run: nix build -L '.#devShell.x86_64-linux'
 
