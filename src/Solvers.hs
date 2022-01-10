@@ -7,11 +7,12 @@ module Solvers
   )
 where
 
+import Control.Parallel.Strategies
 import Data.Foldable
 import Data.Ord
-import qualified Data.Set as Set
 import Lib
 
+{-# INLINE minimumOn #-}
 minimumOn :: (a -> Int) -> [a] -> a
 minimumOn f = snd . minimumBy (comparing fst) . pmap (\x -> let n = f x in seq n (n, x))
 
@@ -30,12 +31,13 @@ sieve = sieveLike $ \_ remaining _ -> remaining
 smart :: Solver
 smart = sieveLike $ \(Dictionary _ answers) _ _ -> answers
 
-smartFast :: Solver
-smartFast = sieveLike $ \(Dictionary _ answers) _ (Knowledge g _ _) -> filter ((>= 2) . count (flip Set.notMember g) . toList) answers
-
 smartest :: Solver
-smartest = sieveLike $ \(Dictionary valid _) _ (Knowledge g _ _) -> valid
+smartest = sieveLike $ \(Dictionary valid _) _ _ -> valid
 
 {-# INLINE count #-}
 count :: (a -> Bool) -> [a] -> Int
 count p = length . filter p
+
+{-# INLINE pmap #-}
+pmap :: (a -> b) -> [a] -> [b]
+pmap = parMap rpar

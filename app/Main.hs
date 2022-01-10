@@ -9,7 +9,7 @@ import Solvers
 main :: IO ()
 main = do
   valid <- loadWordList "./valid.txt"
-  answers <- loadWordList "./words.txt"
+  answers <- loadWordList "./answers.txt"
   let dict = Dictionary (answers <> valid) answers
   interactive dict smartest (Just $ parseWord "roate")
 
@@ -32,7 +32,7 @@ interactive dict solver mfirst = go (fromMaybe (solver dict mempty) mfirst) memp
     go guess k = do
       resp <- ask guess
       if resp == V5 Green Green Green Green Green
-        then pure ()
+        then putStrLn "gg"
         else
           let k' = k <> fromResponse guess resp
            in go (solver dict k') k'
@@ -45,7 +45,7 @@ evalSolver solver dict mfirst ans = do
        in g <$ putStrLn ("First guess: " <> showWord g)
     Just g -> g <$ putStrLn ("First guess (forced): " <> showWord g)
   putStrLn $ unwords $ fmap showWord $ playPure solver dict ans (Just first)
-  let g = flip pmap (answerWords dict) $ \ans ->
+  let g = flip fmap (answerWords dict) $ \ans ->
         let guesses = playPure solver dict ans (Just first)
          in seq guesses (length guesses, guesses)
       (n, ws) = maximumBy (comparing fst) g

@@ -1,12 +1,11 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE StrictData #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Lib where
 
 import Control.Applicative
-import Control.Monad.State
 import Control.Monad.Writer
-import Control.Parallel.Strategies
 import Data.Char (chr, isAsciiLower, isAsciiUpper, ord)
 import Data.Foldable
 import Data.Set (Set)
@@ -42,12 +41,15 @@ data Letter = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q 
 data Slot = IsNot (Set Letter) | Is Letter
 
 instance Semigroup Slot where
+  {-# INLINE (<>) #-}
   Is a <> Is b = if a == b then Is a else error "impossible"
   Is a <> IsNot _ = Is a
   IsNot _ <> Is b = Is b
   IsNot a <> IsNot b = IsNot (a <> b)
 
-instance Monoid Slot where mempty = IsNot mempty
+instance Monoid Slot where
+  {-# INLINE mempty #-}
+  mempty = IsNot mempty
 
 data Knowledge = Knowledge
   { greys :: Set Letter,
@@ -56,12 +58,12 @@ data Knowledge = Knowledge
   }
 
 instance Semigroup Knowledge where
-  (Knowledge ga ya sa) <> (Knowledge gb yb sb) = Knowledge (ga <> gb) (ya <> yb) (sa <> sb)
   {-# INLINE (<>) #-}
+  (Knowledge ga ya sa) <> (Knowledge gb yb sb) = Knowledge (ga <> gb) (ya <> yb) (sa <> sb)
 
 instance Monoid Knowledge where
-  mempty = Knowledge mempty mempty mempty
   {-# INLINE mempty #-}
+  mempty = Knowledge mempty mempty mempty
 
 type Solver = Dictionary -> Knowledge -> Word'
 
@@ -72,7 +74,6 @@ fits (Knowledge greys yellows slots) word =
     && all (flip elem word) yellows
     && and (liftA2 fitSlot slots word)
   where
-    {-# INLINE fitSlot #-}
     fitSlot :: Slot -> Letter -> Bool
     fitSlot (IsNot ins) c = Set.notMember c ins
     fitSlot (Is g) c = g == c
@@ -129,6 +130,3 @@ playPure solver dict answer mfirst =
     go k =
       let guess = solver dict k
        in guess : if guess == answer then [] else go (k <> rate answer guess)
-
-pmap :: (a -> b) -> [a] -> [b]
-pmap = parMap rpar
