@@ -41,8 +41,7 @@ There's probably a ton of low-hanging fruit in terms of optimization[^quirk], bu
 In practice it doesn't really matter anyway, the first word is the most expensive to calculate, but it's also the same every time.
 So, I just calculated it once, and now the first guess is firm-coded to `ROATE`.
 
-[^quirk]:
-For some reason the average utilization is only about 230%, but if we select our answers from _a_ or _a'_ we get the expected 1200%.
+[^quirk]: For some reason the average utilization for _v_ is only about 230%, but if we select our answers from _a_ or _a'_ we get the expected 1200%.
 I'm not sure what's going on there.
 
 ### Running
