@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 import Control.Monad
 import Data.Foldable
 import Data.Maybe
@@ -11,7 +13,31 @@ main = do
   valid <- loadWordList "./valid.txt"
   answers <- loadWordList "./words.txt"
   let dict = Dictionary valid answers
-  evalSolver smartest dict (parseWord "raise") (fromJust $ parseWord "match")
+  interactive dict smartest (Just $ parseWord "roate")
+
+interactive :: Dictionary -> Solver -> Maybe Word' -> IO ()
+interactive dict solver mfirst = go (fromMaybe (solver dict mempty) mfirst) mempty
+  where
+    parseChar :: Char -> Maybe LetterResponse
+    parseChar 'G' = pure Green
+    parseChar 'g' = pure Green
+    parseChar 'Y' = pure Yellow
+    parseChar 'y' = pure Yellow
+    parseChar '.' = pure Grey
+    parseChar _ = Nothing
+    ask :: Word' -> IO (V5 LetterResponse)
+    ask w = do
+      putStrLn $ showWord w <> "?\t\t'.' for grey, 'y'/'Y' for yellow, 'g'/'G' for green"
+      getLine >>= \case
+        [a, b, c, d, e] | Just v <- traverse parseChar (V5 a b c d e) -> pure v
+        _ -> putStrLn "Parse error" >> ask w
+    go guess k = do
+      resp <- ask guess
+      if resp == V5 Green Green Green Green Green
+        then pure ()
+        else
+          let k' = k <> fromResponse guess resp
+           in go (solver dict k') k'
 
 evalSolver :: Solver -> Dictionary -> Maybe Word' -> Word' -> IO ()
 evalSolver solver dict mfirst ans = do
@@ -28,12 +54,9 @@ evalSolver solver dict mfirst ans = do
       av = average (fmap fst g)
   putStrLn $ "Average: " <> show av
   putStrLn $ "Worst (" <> show n <> "): " <> unwords (fmap showWord ws)
-
-average :: [Int] -> Double
-average xs = fromIntegral (sum xs) / fromIntegral (length xs)
-
-parseWordIO :: String -> IO Word'
-parseWordIO w = maybe (Sys.die $ "Couldn't parse " <> show w) pure $ parseWord w
+  where
+    average :: [Int] -> Double
+    average xs = fromIntegral (sum xs) / fromIntegral (length xs)
 
 loadWordList :: FilePath -> IO [Word']
-loadWordList fp = readFile fp >>= traverse parseWordIO . lines
+loadWordList fp = fmap parseWord . lines <$> readFile fp

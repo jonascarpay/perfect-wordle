@@ -4,6 +4,8 @@
 module Lib where
 
 import Control.Applicative
+import Control.Monad.State
+import Control.Monad.Writer
 import Control.Parallel.Strategies
 import Data.Char (chr, isAsciiLower, isAsciiUpper, ord)
 import Data.Foldable
@@ -37,15 +39,15 @@ instance Applicative V5 where
 data Letter = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z
   deriving (Show, Eq, Ord, Enum)
 
-data Slot = Yellow (Set Letter) | Green Letter
+data Slot = IsNot (Set Letter) | Is Letter
 
 instance Semigroup Slot where
-  Green a <> Green b = if a == b then Green a else error "impossible"
-  Green a <> Yellow _ = Green a
-  Yellow _ <> Green b = Green b
-  Yellow a <> Yellow b = Yellow (a <> b)
+  Is a <> Is b = if a == b then Is a else error "impossible"
+  Is a <> IsNot _ = Is a
+  IsNot _ <> Is b = Is b
+  IsNot a <> IsNot b = IsNot (a <> b)
 
-instance Monoid Slot where mempty = Yellow mempty
+instance Monoid Slot where mempty = IsNot mempty
 
 data Knowledge = Knowledge
   { greys :: Set Letter,
@@ -72,8 +74,8 @@ fits (Knowledge greys yellows slots) word =
   where
     {-# INLINE fitSlot #-}
     fitSlot :: Slot -> Letter -> Bool
-    fitSlot (Yellow ins) c = Set.notMember c ins
-    fitSlot (Green g) c = g == c
+    fitSlot (IsNot ins) c = Set.notMember c ins
+    fitSlot (Is g) c = g == c
 
 {-# INLINE rate #-}
 rate :: Word' -> Word' -> Knowledge
@@ -85,9 +87,22 @@ rate solution = \guess ->
   where
     sletters = Set.fromList $ toList solution
     slot s g
-      | s == g = Green s
-      | Set.member g sletters = Yellow (Set.singleton g)
-      | otherwise = Yellow mempty
+      | s == g = Is s
+      | Set.member g sletters = IsNot (Set.singleton g)
+      | otherwise = IsNot mempty
+
+data LetterResponse = Grey | Yellow | Green
+  deriving (Eq, Show)
+
+fromResponse :: Word' -> V5 LetterResponse -> Knowledge
+fromResponse w r =
+  let (v, (gr, yl)) = runWriter (sequence $ liftA2 f w r)
+   in Knowledge gr yl v
+  where
+    f :: Letter -> LetterResponse -> Writer (Set Letter, Set Letter) Slot
+    f l Grey = IsNot mempty <$ tell (Set.singleton l, mempty)
+    f l Yellow = IsNot (Set.singleton l) <$ tell (mempty, Set.singleton l)
+    f l Green = Is l <$ tell (mempty, mempty)
 
 fromChar :: Char -> Maybe Letter
 fromChar c
@@ -98,12 +113,12 @@ fromChar c
 toChar :: Letter -> Char
 toChar = chr . (+ ord 'A') . fromEnum
 
-parseWord :: String -> Maybe Word'
-parseWord [a, b, c, d, e] = traverse fromChar $ V5 a b c d e
-parseWord _ = Nothing
+parseWord :: String -> Word'
+parseWord [a, b, c, d, e] | Just v <- traverse fromChar (V5 a b c d e) = v
+parseWord str = error $ "Couldn't parse " <> str
 
 showWord :: Word' -> String
-showWord = show . foldMap show
+showWord = foldMap show
 
 playPure :: Solver -> Dictionary -> Word' -> Maybe Word' -> [Word']
 playPure solver dict answer mfirst =

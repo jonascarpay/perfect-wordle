@@ -35,7 +35,7 @@ smartFast :: Solver
 smartFast = sieveLike $ \(Dictionary _ answers) _ (Knowledge g _ _) -> filter ((>= 2) . count (flip Set.notMember g) . toList) answers
 
 smartest :: Solver
-smartest = sieveLike $ \(Dictionary valid _) _ (Knowledge g _ _) -> filter ((>= 2) . count (flip Set.notMember g) . toList) valid
+smartest = sieveLike $ \(Dictionary valid _) _ (Knowledge g _ _) -> valid
 
 {-# INLINE count #-}
 count :: (a -> Bool) -> [a] -> Int
