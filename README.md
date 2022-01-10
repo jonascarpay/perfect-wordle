@@ -1,7 +1,7 @@
 # perfect-wordle
 
 Solver for [Wordle](https://www.powerlanguage.co.uk/wordle/).
-The bot never loses, and on average wins in 3.58 moves.
+The bot never loses, and on average wins in 3.50 moves.
 
 ### Demo
 
@@ -44,5 +44,22 @@ I just calculated it once, and now the first guess is firm-coded to `ROATE`.
 [^quirk]:
 For some reason the average utilization is only about 230%, but if we select our answers from _a_ or _a'_ we get the expected 1200%.
 I'm not sure what's going on there.
+
+### Running
+
+#### Cabal
+
+```
+> cabal new-run perfect-wordle
+```
+
+#### Nix
+
+Only attempt if you have [the IOHK cache/my cachix set up](https://jonascarpay.com/posts/2021-01-28-haskell-project-template.html).
+
+```
+nix build
+result/bin/perfect-wordle
+```
 
 Generated with [template-haskell](https://github.com/jonascarpay/template-haskell)

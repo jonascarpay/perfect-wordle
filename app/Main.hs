@@ -1,12 +1,10 @@
 {-# LANGUAGE LambdaCase #-}
 
-import Control.Monad
 import Data.Foldable
 import Data.Maybe
 import Data.Ord
 import Lib
 import Solvers
-import qualified System.Exit as Sys
 
 main :: IO ()
 main = do

@@ -21,16 +21,6 @@
                   hlint = { };
                   ormolu = { };
                 };
-                ## ormolu that uses ImportQualifiedPost.
-                ## To use, remove ormolu from the shell.tools section above, and uncomment the following lines.
-                # buildInputs =
-                #   let
-                #     ormolu = pkgs.haskell-nix.tool compiler-nix-name "ormolu" "latest";
-                #     ormolu-wrapped = pkgs.writeShellScriptBin "ormolu" ''
-                #       ${ormolu}/bin/ormolu --ghc-opt=-XImportQualifiedPost $@
-                #     '';
-                #   in
-                #   [ ormolu-wrapped ];
               };
             };
         };

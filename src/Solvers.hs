@@ -7,7 +7,6 @@ module Solvers
   )
 where
 
-import Control.Parallel.Strategies
 import Data.Foldable
 import Data.Ord
 import qualified Data.Set as Set

@@ -40,33 +40,9 @@ library
     , mtl
     , parallel
 
-executable perfect-wordle-exe
+executable perfect-wordle
   import:         common-options
   hs-source-dirs: app
   main-is:        Main.hs
   build-depends:  perfect-wordle
-  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
-
-test-suite perfect-wordle-test
-  import:         common-options
-  type:           exitcode-stdio-1.0
-  hs-source-dirs: test
-  main-is:        Spec.hs
-  build-depends:
-    , hspec
-    , HUnit
-    , perfect-wordle
-    , QuickCheck
-
-  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
-
-benchmark perfect-wordle-bench
-  import:         common-options
-  type:           exitcode-stdio-1.0
-  hs-source-dirs: bench
-  main-is:        Main.hs
-  build-depends:
-    , criterion
-    , perfect-wordle
-
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
