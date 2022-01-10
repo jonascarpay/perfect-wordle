@@ -11,19 +11,19 @@ main = do
   valid <- loadWordList "./valid.txt"
   answers <- loadWordList "./words.txt"
   let dict = Dictionary valid answers
-  evalSolver simple dict (parseWord "raise") (fromJust $ parseWord "query")
+  evalSolver smartest dict (parseWord "raise") (fromJust $ parseWord "match")
 
 evalSolver :: Solver -> Dictionary -> Maybe Word' -> Word' -> IO ()
-evalSolver s dict mfirst ans = do
+evalSolver solver dict mfirst ans = do
   first <- case mfirst of
     Nothing ->
-      let g = s dict mempty
+      let g = solver dict mempty
        in g <$ putStrLn ("First guess: " <> showWord g)
     Just g -> g <$ putStrLn ("First guess (forced): " <> showWord g)
-  putStrLn $ unwords $ fmap showWord $ playPure s dict ans (Just first)
-  let g = flip fmap (answerWords dict) $ \ans ->
-        let guesses = playPure simple dict ans (parseWord "raise")
-         in (length guesses, guesses)
+  putStrLn $ unwords $ fmap showWord $ playPure solver dict ans (Just first)
+  let g = flip pmap (answerWords dict) $ \ans ->
+        let guesses = playPure solver dict ans (Just first)
+         in seq guesses (length guesses, guesses)
       (n, ws) = maximumBy (comparing fst) g
       av = average (fmap fst g)
   putStrLn $ "Average: " <> show av

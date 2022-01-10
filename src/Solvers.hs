@@ -1,31 +1,42 @@
+{-# LANGUAGE Strict #-}
+
 module Solvers
-  ( simple,
+  ( sieve,
+    smart,
+    smartest,
   )
 where
 
 import Control.Parallel.Strategies
 import Data.Foldable
 import Data.Ord
+import qualified Data.Set as Set
 import Lib
 
 minimumOn :: (a -> Int) -> [a] -> a
-minimumOn f = snd . minimumBy (comparing fst) . parMap rpar (\x -> let n = f x in seq n (n, x))
+minimumOn f = snd . minimumBy (comparing fst) . pmap (\x -> let n = f x in seq n (n, x))
 
-simple :: Solver
-simple (Dictionary _ answers) know = flip minimumOn candidates $ \guess ->
-  let n = sum $ do
-        act <- candidates
-        let know' = know <> rate act guess
-        pure $ length $ filter (fits know') candidates
-   in n
-  where
-    candidates = filter (fits know) answers
+{-# INLINE sieveLike #-}
+sieveLike :: (Dictionary -> [Word'] -> Knowledge -> [Word']) -> Solver
+sieveLike f dict@(Dictionary _ answers) know =
+  case filter (fits know) answers of
+    [a] -> a
+    [a, _] -> a
+    answers' -> flip minimumOn (f dict answers' know) $ \guess ->
+      sum [count (fits (know <> rate act guess)) answers' | act <- answers']
+
+sieve :: Solver
+sieve = sieveLike $ \_ remaining _ -> remaining
 
 smart :: Solver
-smart (Dictionary valids answers) k =
-  case answers' of
-    [a] -> a
-    _ -> flip minimumOn valids $ \guess ->
-      sum [length $ filter (fits (rate act guess)) answers' | act <- answers']
-  where
-    answers' = filter (fits k) answers
+smart = sieveLike $ \(Dictionary _ answers) _ _ -> answers
+
+smartFast :: Solver
+smartFast = sieveLike $ \(Dictionary _ answers) _ (Knowledge g _ _) -> filter ((>= 2) . count (flip Set.notMember g) . toList) answers
+
+smartest :: Solver
+smartest = sieveLike $ \(Dictionary valid _) _ (Knowledge g _ _) -> filter ((>= 2) . count (flip Set.notMember g) . toList) valid
+
+{-# INLINE count #-}
+count :: (a -> Bool) -> [a] -> Int
+count p = length . filter p

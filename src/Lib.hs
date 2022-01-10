@@ -4,6 +4,7 @@
 module Lib where
 
 import Control.Applicative
+import Control.Parallel.Strategies
 import Data.Char (chr, isAsciiLower, isAsciiUpper, ord)
 import Data.Foldable
 import Data.Set (Set)
@@ -113,3 +114,6 @@ playPure solver dict answer mfirst =
     go k =
       let guess = solver dict k
        in guess : if guess == answer then [] else go (k <> rate answer guess)
+
+pmap :: (a -> b) -> [a] -> [b]
+pmap = parMap rpar
