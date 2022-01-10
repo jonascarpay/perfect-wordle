@@ -1,0 +1,5 @@
+packages:
+  ./
+
+package perfect-wordle
+  tests: True

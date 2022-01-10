@@ -1,0 +1,16 @@
+cradle:
+  multi:
+    # - path: "ignore/"
+    #   config: {cradle: {none: }}
+
+    - path: "src"
+      config: {cradle: {cabal: {component: "lib:perfect-wordle"}}}
+
+    - path: "app"
+      config: {cradle: {cabal: {component: "perfect-wordle:perfect-wordle-exe"}}}
+
+    - path: "test"
+      config: {cradle: {cabal: {component: "perfect-wordle:perfect-wordle-test"}}}
+
+    - path: "bench"
+      config: {cradle: {cabal: {component: "perfect-wordle:perfect-wordle-bench"}}}
