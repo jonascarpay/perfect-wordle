@@ -9,6 +9,11 @@ import Data.Foldable
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+data Dictionary = Dictionary
+  { validWords :: [Word'],
+    answerWords :: [Word']
+  }
+
 data V5 a = V5 a a a a a
   deriving (Eq, Show, Functor, Foldable, Traversable)
 
@@ -55,7 +60,7 @@ instance Monoid Knowledge where
   mempty = Knowledge mempty mempty mempty
   {-# INLINE mempty #-}
 
-type Solver = [Word'] -> Knowledge -> Word'
+type Solver = Dictionary -> Knowledge -> Word'
 
 {-# INLINE fits #-}
 fits :: Knowledge -> Word' -> Bool
@@ -99,12 +104,12 @@ parseWord _ = Nothing
 showWord :: Word' -> String
 showWord = show . foldMap show
 
-playPure :: Solver -> [Word'] -> Word' -> Maybe Word' -> [Word']
-playPure solver words answer mfirst =
+playPure :: Solver -> Dictionary -> Word' -> Maybe Word' -> [Word']
+playPure solver dict answer mfirst =
   case mfirst of
     Nothing -> go mempty
     Just f -> f : go (rate answer f)
   where
     go k =
-      let guess = solver words k
+      let guess = solver dict k
        in guess : if guess == answer then [] else go (k <> rate answer guess)
