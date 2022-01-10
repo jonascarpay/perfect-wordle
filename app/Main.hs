@@ -12,7 +12,7 @@ main :: IO ()
 main = do
   valid <- loadWordList "./valid.txt"
   answers <- loadWordList "./words.txt"
-  let dict = Dictionary valid answers
+  let dict = Dictionary (answers <> valid) answers
   interactive dict smartest (Just $ parseWord "roate")
 
 interactive :: Dictionary -> Solver -> Maybe Word' -> IO ()
