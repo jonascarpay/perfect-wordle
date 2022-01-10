@@ -1,37 +1,32 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE StrictData #-}
 
-module Lib
-  ( playPure,
-    parseWordIO,
-    showWord,
-    parseWord,
-    loadWordList,
-  )
-where
+module Lib where
 
 import Control.Applicative
-import Control.Monad
-import Control.Parallel.Strategies
 import Data.Char (chr, isAsciiLower, isAsciiUpper, ord)
 import Data.Foldable
-import Data.Ord (comparing)
 import Data.Set (Set)
 import qualified Data.Set as Set
-import qualified System.Exit as Sys
 
 data V5 a = V5 a a a a a
   deriving (Eq, Show, Functor, Foldable, Traversable)
 
-instance Semigroup a => Semigroup (V5 a) where (<>) = liftA2 (<>)
+instance Semigroup a => Semigroup (V5 a) where
+  (<>) = liftA2 (<>)
+  {-# INLINE (<>) #-}
 
-instance Monoid a => Monoid (V5 a) where mempty = pure mempty
+instance Monoid a => Monoid (V5 a) where
+  mempty = pure mempty
+  {-# INLINE mempty #-}
 
 type Word' = V5 Letter
 
 instance Applicative V5 where
   pure a = V5 a a a a a
   V5 fa fb fc fd fe <*> V5 a b c d e = V5 (fa a) (fb b) (fc c) (fd d) (fe e)
+  {-# INLINE pure #-}
+  {-# INLINE (<*>) #-}
 
 data Letter = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z
   deriving (Show, Eq, Ord, Enum)
@@ -52,18 +47,29 @@ data Knowledge = Knowledge
     slots :: V5 Slot
   }
 
-instance Semigroup Knowledge where (Knowledge ga ya sa) <> (Knowledge gb yb sb) = Knowledge (ga <> gb) (ya <> yb) (sa <> sb)
+instance Semigroup Knowledge where
+  (Knowledge ga ya sa) <> (Knowledge gb yb sb) = Knowledge (ga <> gb) (ya <> yb) (sa <> sb)
+  {-# INLINE (<>) #-}
 
-instance Monoid Knowledge where mempty = Knowledge mempty mempty mempty
+instance Monoid Knowledge where
+  mempty = Knowledge mempty mempty mempty
+  {-# INLINE mempty #-}
 
+type Solver = [Word'] -> Knowledge -> Word'
+
+{-# INLINE fits #-}
 fits :: Knowledge -> Word' -> Bool
 fits (Knowledge greys yellows slots) word =
-  and
-    [ all (flip Set.notMember greys) word,
-      all (flip elem word) yellows,
-      and $ liftA2 fitSlot slots word
-    ]
+  all (flip Set.notMember greys) word
+    && all (flip elem word) yellows
+    && and (liftA2 fitSlot slots word)
+  where
+    {-# INLINE fitSlot #-}
+    fitSlot :: Slot -> Letter -> Bool
+    fitSlot (Yellow ins) c = Set.notMember c ins
+    fitSlot (Green g) c = g == c
 
+{-# INLINE rate #-}
 rate :: Word' -> Word' -> Knowledge
 rate solution = \guess ->
   Knowledge
@@ -77,28 +83,11 @@ rate solution = \guess ->
       | Set.member g sletters = Yellow (Set.singleton g)
       | otherwise = Yellow mempty
 
-fitSlot :: Slot -> Letter -> Bool
-fitSlot (Yellow ins) c = Set.notMember c ins
-fitSlot (Green g) c = g == c
-
 fromChar :: Char -> Maybe Letter
 fromChar c
   | isAsciiLower c = Just $ toEnum $ ord c - ord 'a'
   | isAsciiUpper c = Just $ toEnum $ ord c - ord 'A'
   | otherwise = Nothing
-
-minimumOn :: (a -> Int) -> [a] -> a
-minimumOn f = snd . minimumBy (comparing fst) . parMap rpar (\x -> let n = f x in seq n (n, x))
-
-findGuess :: [Word'] -> Knowledge -> Word'
-findGuess candidates know = flip minimumOn candidates' $ \guess ->
-  let n = sum $ do
-        act <- candidates'
-        let know' = rate act guess
-        pure $ length $ filter (fits know') candidates'
-   in n
-  where
-    candidates' = filter (fits know) candidates
 
 toChar :: Letter -> Char
 toChar = chr . (+ ord 'A') . fromEnum
@@ -107,21 +96,15 @@ parseWord :: String -> Maybe Word'
 parseWord [a, b, c, d, e] = traverse fromChar $ V5 a b c d e
 parseWord _ = Nothing
 
-parseWordIO :: String -> IO Word'
-parseWordIO w = maybe (Sys.die $ "Couldn't parse " <> show w) pure $ parseWord w
-
-loadWordList :: FilePath -> IO [Word']
-loadWordList fp = readFile fp >>= traverse parseWordIO . lines
-
 showWord :: Word' -> String
 showWord = show . foldMap show
 
-playPure :: [Word'] -> Word' -> Maybe Word' -> [Word']
-playPure words answer mfirst =
+playPure :: Solver -> [Word'] -> Word' -> Maybe Word' -> [Word']
+playPure solver words answer mfirst =
   case mfirst of
     Nothing -> go mempty
     Just f -> f : go (rate answer f)
   where
     go k =
-      let guess = findGuess words k
+      let guess = solver words k
        in guess : if guess == answer then [] else go (k <> rate answer guess)
