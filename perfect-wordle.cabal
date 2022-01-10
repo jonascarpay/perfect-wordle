@@ -26,7 +26,7 @@ common common-options
   ghc-options:
     -Wall -Wcompat -Widentities -Wincomplete-uni-patterns
     -Wincomplete-record-updates -Wredundant-constraints
-    -fhide-source-paths -Wpartial-fields
+    -fhide-source-paths -Wpartial-fields -O2
 
 library
   import:          common-options
@@ -35,6 +35,7 @@ library
   build-depends:
     , containers
     , mtl
+    , parallel
 
 executable perfect-wordle-exe
   import:         common-options
