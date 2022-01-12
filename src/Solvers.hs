@@ -33,7 +33,7 @@ smart :: Solver
 smart = sieveLike $ \(Dictionary _ answers) _ _ -> answers
 
 smartest :: Solver
-smartest = sieveLike $ \(Dictionary valid _) _ _ -> valid
+smartest = sieveLike $ \(Dictionary valid _) a' _ -> a' <> valid -- Sticking the possible answers at the front makes it so we prefer words them as guesses
 
 {-# INLINE count #-}
 count :: (a -> Bool) -> [a] -> Int
