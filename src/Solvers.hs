@@ -20,6 +20,7 @@ minimumOn f = snd . minimumBy (comparing fst) . pmap (\x -> let n = f x in seq n
 sieveLike :: (Dictionary -> [Word'] -> Knowledge -> [Word']) -> Solver
 sieveLike f dict@(Dictionary _ answers) know =
   case filter (fits know) answers of
+    [] -> error "No possible answers!"
     [a] -> a
     [a, _] -> a
     answers' -> flip minimumOn (f dict answers' know) $ \guess ->

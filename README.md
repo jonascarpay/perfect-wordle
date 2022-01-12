@@ -1,7 +1,7 @@
 # perfect-wordle
 
 Solver for [Wordle](https://www.powerlanguage.co.uk/wordle/).
-The bot never loses, and on average wins in 3.50 moves.
+The bot never loses, and on average wins in 3.495 moves.
 
 ### Demo
 

@@ -35,7 +35,12 @@ interactive dict solver mfirst = go (fromMaybe (solver dict mempty) mfirst) memp
         then putStrLn "gg"
         else
           let k' = k <> fromResponse guess resp
-           in go (solver dict k') k'
+              remaining = filter (fits k') (answerWords dict)
+           in if null remaining
+                then putStrLn "No remaining valid answers, goodbye"
+                else do
+                  putStrLn $ "Remaining candidates: " <> unwords (fmap showWord remaining)
+                  go (solver dict k') k'
 
 evalSolver :: Solver -> Dictionary -> Maybe Word' -> Word' -> IO ()
 evalSolver solver dict mfirst ans = do
